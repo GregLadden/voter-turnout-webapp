@@ -1,0 +1,78 @@
+
+# Python-related ignores
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.egg-info/
+.Python
+env/
+venv/
+ENV/
+env.bak/
+*.env
+
+# Flask-related ignores
+instance/
+*.log
+*.pot
+*.pyc
+*.pyo
+
+# Node.js and Svelte-related ignores
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnpm-debug.log
+.svelte-kit/
+.webpack/
+build/
+dist/
+*.cache
+.DS_Store
+
+# Output of build tools
+/build
+/web/build
+/web/public
+
+# SvelteKit temporary files
+.svelte-kit/
+
+# Ignore Svelte generated files
+*.cache/
+output/
+
+# Docker-related ignores
+docker-compose.override.yml
+docker-compose.dev.yml
+Dockerfile.*
+.dockerignore
+
+# Heroku-related ignores
+.heroku/
+
+# System-generated files
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Logs
+logs/
+*.log
+
+# Other
+coverage/
+*.pid
+*.seed
+*.key
