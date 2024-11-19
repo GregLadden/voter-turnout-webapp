@@ -1,8 +1,8 @@
 
-
 <script>
   import axios from "axios";
 
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
   let handleMissing = true;
   let removeOutliers = true;
   let normalize = true;
@@ -10,6 +10,15 @@
   let cleanedData = [];
   let loading = false;
   let error = null;
+  let sortColumn = null;
+  let sortOrder = "asc";
+
+  const columnOrder = [
+    "Year", "Voting Population", "Total Voter Turnout", "White", "Black",
+    "Asian", "Hispanic", "Male", "Female", "18 to 24", "22 to 44", "45 to 64", "65 and Over"
+  ];
+
+  const numberFormatter = new Intl.NumberFormat('en-US');
 
   async function submitForm() {
     loading = true;
@@ -23,12 +32,12 @@
         convert_numeric: convertNumeric.toString()
       });
 
-      const response = await axios.get(`http://127.0.0.1:5000/clean-data?${queryParams}`);
+      const response = await axios.get(`${baseUrl}/clean-data?${queryParams}`);
       cleanedData = response.data.map(row =>
         Object.fromEntries(
           Object.entries(row).map(([key, value]) => [
-            key,
-            typeof value === 'number' ? parseFloat(value.toFixed(2)) : value // Round numeric values to 2 decimal places
+            key.trim(),  // Trim spaces from keys for consistent column naming
+            typeof value === 'number' ? parseFloat(value.toFixed(2)) : value
           ])
         )
       );
@@ -39,15 +48,45 @@
       loading = false;
     }
   }
+
+  function sortData(column) {
+    if (sortColumn === column) {
+      sortOrder = sortOrder === "asc" ? "desc" : "asc";
+    } else {
+      sortColumn = column;
+      sortOrder = "asc";
+    }
+
+    cleanedData = [...cleanedData].sort((a, b) => {
+      let valA = a[column];
+      let valB = b[column];
+
+      // Handle null or undefined values by placing them at the end
+      if (valA === null || valA === undefined) return 1;
+      if (valB === null || valB === undefined) return -1;
+
+      if (sortOrder === "asc") {
+        return valA > valB ? 1 : valA < valB ? -1 : 0;
+      } else {
+        return valA < valB ? 1 : valA > valB ? -1 : 0;
+      }
+    });
+  }
 </script>
 
 <style>
-  .form-container { 
-    max-width: 600px; 
-    margin: auto; 
-    padding: 20px; 
-    background-color: #f3f4f6; 
-    border-radius: 8px; 
+  .form-container {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+    background-color: #f3f4f6;
+    border-radius: 8px;
+  }
+  .table-header {
+    background-color: #3b82f6;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
   }
 </style>
 
@@ -84,17 +123,29 @@
   <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden mt-4">
     <thead>
       <tr>
-        {#each Object.keys(cleanedData[0] || {}) as key}
-          <th class="py-3 px-4 text-left text-sm font-medium">{key.trim()}</th>
+        {#each columnOrder as key}
+          <th
+            class="table-header py-3 px-4 text-left text-sm font-medium"
+            on:click={() => sortData(key)}
+          >
+            {key.trim()}
+            {#if sortColumn === key}
+              {sortOrder === "asc" ? " ↑" : " ↓"}
+            {/if}
+          </th>
         {/each}
       </tr>
     </thead>
     <tbody>
       {#each cleanedData as row}
         <tr class="hover:bg-gray-100">
-          {#each Object.values(row) as value}
+          {#each columnOrder as key}
             <td class="py-3 px-4 border-b text-sm text-gray-700">
-              {value === null || value === undefined || Number.isNaN(value) ? "N/A" : value}
+              {#if key === "Voting Population"}
+                {row[key] !== null && row[key] !== undefined ? numberFormatter.format(row[key]) : "N/A"}
+              {:else}
+                {row[key] === null || row[key] === undefined ? "N/A" : row[key]}
+              {/if}
             </td>
           {/each}
         </tr>

@@ -6,20 +6,24 @@
   import axios from "axios";
   import VoterTurnoutTable from "./components/VoterTurnoutTable.svelte";
   import DataCleaning from './components/DataCleaning.svelte';
+  import HistogramVoterTurnoutRates from "./components/HistogramVoterTurnoutRates.svelte";
+  import HistogramVoterTurnoutByAge from "./components/HistogramVoterTurnoutByAge.svelte";
+  import HistogramVoterTurnoutByEthnicity from "./components/HistogramVoterTurnoutByEthnicity.svelte";
 
+  // const baseUrl = import.meta.env.VITE_API_BASE_URL;
   let data = []; // Raw data
   let activeMenu = "data"; // Main menu selection
   let activeTab = "raw"; // Tab selection within the Data section
 
   // Fetch raw data on mount
-  onMount(async () => {
-    try {
-      const response = await axios.get("http://127.0.0.1:5000/data");
-      data = response.data;
-    } catch (error) {
-      console.error("Failed to fetch raw data:", error);
-    }
-  });
+  // onMount(async () => {
+  //   try {
+  //     const response = await axios.get(`${baseUrl}/data`);
+  //     data = response.data;
+  //   } catch (error) {
+  //     console.error("Failed to fetch raw data:", error);
+  //   }
+  // });
 
   // Menu selection function
   function selectMenu(menu) {
@@ -71,7 +75,9 @@
     {:else if activeMenu === "graphs"}
       <!-- Placeholder for Graphs Component -->
       <p>Graphs Component</p>
-      
+      <HistogramVoterTurnoutRates />
+      <HistogramVoterTurnoutByAge />
+      <HistogramVoterTurnoutByEthnicity />
     {:else if activeMenu === "model"}
       <!-- Placeholder for ModelTraining Component -->
       <p>Model Training Component</p>

@@ -1,13 +1,16 @@
+
+
 <script>
   import axios from "axios";
   import { onMount } from "svelte";
-
+  
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
   let data = [];
+  let cleanedData = [];
   let loading = true;
   let error = null;
   let sortColumn = null;
   let sortOrder = "asc";
-  export let cleanedData = []; // Receive cleaned data as a prop
 
   // Custom column order
   const columnOrder = [
@@ -18,27 +21,21 @@
   // Formatter for numbers with commas
   const numberFormatter = new Intl.NumberFormat('en-US');
 
-  // Load initial raw data on mount
+  // Fetch raw data on mount
   onMount(async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:5000/data");
-      data = response.data.map(item => {
-        return Object.fromEntries(
-          Object.entries(item).map(([key, value]) => [
-            key,
-            value === "NaN" || Number.isNaN(value) ? null : value
-          ])
-        );
-      });
+      const response = await axios.get(`${baseUrl}/data`);
+      data = response.data;
+      console.log(data)
+      loading = false;
     } catch (err) {
       error = "Failed to fetch data";
-      console.error("Error fetching data:", err);
-    } finally {
       loading = false;
+      console.error("Error fetching data:", err);
     }
   });
 
-  // Sort data based on selected column and order
+  // Sorting function that directly reassigns the data array for Svelte reactivity
   function sortData(column) {
     if (sortColumn === column) {
       sortOrder = sortOrder === "asc" ? "desc" : "asc";
@@ -47,20 +44,28 @@
       sortOrder = "asc";
     }
 
-    const targetData = cleanedData.length > 0 ? cleanedData : data;
-    targetData.sort((a, b) => {
-      const valA = a[column];
-      const valB = b[column];
+    let dataToSort = cleanedData.length > 0 ? [...cleanedData] : [...data];
 
-      if (valA === null) return 1;
-      if (valB === null) return -1;
+    dataToSort = dataToSort.sort((a, b) => {
+      let valA = a[column];
+      let valB = b[column];
+
+      // Handle null or undefined values by placing them at the end
+      if (valA === null || valA === undefined) return 1;
+      if (valB === null || valB === undefined) return -1;
 
       if (sortOrder === "asc") {
-        return valA > valB ? 1 : -1;
+        return valA > valB ? 1 : valA < valB ? -1 : 0;
       } else {
-        return valA < valB ? 1 : -1;
+        return valA < valB ? 1 : valA > valB ? -1 : 0;
       }
     });
+
+    if (cleanedData.length > 0) {
+      cleanedData = dataToSort; // Update cleanedData array to trigger reactivity
+    } else {
+      data = dataToSort; // Update data array to trigger reactivity
+    }
   }
 </script>
 
@@ -80,7 +85,7 @@
     <p class="text-center text-gray-500">Loading...</p>
   {:else if error}
     <p class="text-center text-red-500">{error}</p>
-  {:else if (cleanedData.length > 0 || data.length > 0)}
+  {:else if (data.length > 0 || cleanedData.length > 0)}
     <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
       <thead>
         <tr>
@@ -105,7 +110,7 @@
                 {#if key === "Voting Population"}
                   {row[key] !== null && row[key] !== undefined ? numberFormatter.format(row[key]) : "N/A"}
                 {:else}
-                  {row[key] === null || row[key] === undefined ? "N/A" : row[key]}
+                  {row[key] === null || row[key] === undefined || Number.isNaN(row[key]) ? "N/A" : row[key]}
                 {/if}
               </td>
             {/each}

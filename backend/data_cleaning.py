@@ -16,8 +16,13 @@ def remove_outliers(df):
     Q1 = numeric_cols.quantile(0.25)
     Q3 = numeric_cols.quantile(0.75)
     IQR = Q3 - Q1
-    outliers = (numeric_cols < (Q1 - 1.5 * IQR)) | (numeric_cols > (Q3 + 1.5 * IQR))
-    df = df[~outliers.any(axis=1)]
+
+    # Define lower and upper bounds for each numeric column
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+
+    # Clip values to these bounds instead of removing rows
+    df[numeric_cols.columns] = numeric_cols.clip(lower=lower_bound, upper=upper_bound, axis=1)
     return df
 
 def normalize_data(df, exclude_columns=[]):

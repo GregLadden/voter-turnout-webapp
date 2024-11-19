@@ -1,14 +1,16 @@
-
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 import pandas as pd
+import numpy as np
+import io
+import matplotlib.pyplot as plt
+import seaborn as sns
 from data_loader import load_data
 from data_cleaning import handle_missing_values, remove_outliers, normalize_data, convert_to_numeric
 from feature_engineering import create_meaningful_features
 from model_training import (train_random_forest, evaluate_model, feature_importance,
                             cross_validate_model, tune_hyperparameters)
 from sklearn.model_selection import train_test_split
-import numpy as np
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -21,6 +23,9 @@ def get_data():
     try:
         # Load the data
         voter_data = load_data()
+        
+        # Strip any leading/trailing spaces in column names
+        voter_data.columns = voter_data.columns.str.strip()
 
         # Replace NaN values with None to make JSON-compliant
         voter_data = voter_data.where(pd.notnull(voter_data), None)
@@ -35,7 +40,6 @@ def get_data():
 def clean_data():
     global voter_data
 
-    # Optional query parameters to control each cleaning step
     handle_missing_flag = request.args.get('handle_missing', 'true').lower() == 'true'
     remove_outliers_flag = request.args.get('remove_outliers', 'true').lower() == 'true'
     normalize_flag = request.args.get('normalize', 'true').lower() == 'true'
@@ -54,7 +58,6 @@ def clean_data():
     # Round numeric values to 2 decimal places for readability
     voter_data = voter_data.applymap(lambda x: round(x, 2) if isinstance(x, float) else x)
 
-    # Convert the DataFrame to JSON for the response
     data = voter_data.to_dict(orient="records")
     return jsonify(data)
 
@@ -131,7 +134,32 @@ def tune_random_forest_route():
     y = voter_data[target]
     _, best_params = tune_hyperparameters(X, y)
     return jsonify({"best_params": best_params})
+# Route to create and send the histogram as an image
+@app.route('/plot-voter-turnout', methods=['GET'])
+def voter_turnout_plot():
+    # Load and sort data
+    voter_data = load_data()
+    voter_data_sorted = voter_data.sort_values('Year')
+
+    # Create the plot
+    plt.figure(figsize=(12, 6))
+    sns.barplot(data=voter_data_sorted, x='Year', y='Total Voter Turnout', palette='viridis')
+    plt.title('Voter Turnout Rates by Year', fontsize=16)
+    plt.xlabel('Year')
+    plt.ylabel('Turnout Rate (%)')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+
+    # Save the plot to a BytesIO object
+    img_io = io.BytesIO()
+    plt.savefig(img_io, format='png')
+    img_io.seek(0)
+    plt.close()  # Close the plot to free memory
+
+    # Send the image file as a response
+    return send_file(img_io, mimetype='image/png')
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
