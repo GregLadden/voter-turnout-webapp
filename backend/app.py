@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
 from data.loader import load_data
 from model.train_randomForest import  (train_random_forest_model, hyper_tune_random_forest) 
 from model.train_linearRegression import (train_linear_regression_model, hyper_tune_linear_regression)
@@ -135,6 +136,7 @@ def hyper_tune_linear_regression_api():
 def predict():
     try:
         data = request.json
+        print("linear data: ", data)
         selected_columns = data.get('columns', [])  # List of column headers to predict for
         predict_years = data.get('predict_years')
 
@@ -163,6 +165,67 @@ def predict():
 
             # Train and predict
             model = LinearRegression()
+            model.fit(valid_data['Year'].values.reshape(-1, 1), actual_values)
+            predicted_values = model.predict(np.array(full_years).reshape(-1, 1)).tolist()
+
+            # Calculate metrics
+            metrics[column] = {
+                "mae": float(mean_absolute_error(actual_values, model.predict(valid_data['Year'].values.reshape(-1, 1)))),
+                "r2": float(r2_score(actual_values, model.predict(valid_data['Year'].values.reshape(-1, 1)))),
+            }
+
+            predictions[column] = predicted_values
+            actual_data[column] = {
+                "years": actual_years,
+                "values": actual_values.tolist()
+            }
+
+        # Return predictions, actual data, and metrics
+        return jsonify({
+            "message": "Prediction successful",
+            "predictions": predictions,
+            "actual_data": actual_data,
+            "metrics": metrics,
+            "years": full_years
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+
+@app.route('/predict-randomforest', methods=['POST'])
+def predict_random_forest():
+    try:
+        data = request.json
+        print("random-forest data", data)
+        selected_columns = data.get('columns', [])  # List of column headers to predict for
+        predict_years = data.get('predict_years')
+
+        # Validate inputs
+        if not selected_columns or not isinstance(selected_columns, list):
+            return jsonify({"error": "Invalid or missing 'columns' parameter"}), 400
+        if not predict_years:
+            return jsonify({"error": "Missing 'predict_years' parameter"}), 400
+
+        # Combine years from the dataset and prediction years
+        min_year = voter_data['Year'].min()
+        max_year = max(predict_years)
+        full_years = np.arange(min_year, max_year + 1).tolist()
+
+        predictions = {}
+        actual_data = {}
+        metrics = {}
+
+        for column in selected_columns:
+            if column not in voter_data.columns:
+                return jsonify({"error": f"Invalid column '{column}'"}), 400
+
+            # Align Year and column data
+            valid_data = voter_data[['Year', column]].dropna()
+            actual_values = valid_data[column].values
+            actual_years = valid_data['Year'].values.tolist()
+
+            # Train and predict using Random Forest
+            model = RandomForestRegressor(random_state=42, n_estimators=100)
             model.fit(valid_data['Year'].values.reshape(-1, 1), actual_values)
             predicted_values = model.predict(np.array(full_years).reshape(-1, 1)).tolist()
 
