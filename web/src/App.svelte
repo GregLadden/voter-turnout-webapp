@@ -9,6 +9,9 @@
   import HistogramVoterTurnoutRates from "./components/HistogramVoterTurnoutRates.svelte";
   import HistogramVoterTurnoutByAge from "./components/HistogramVoterTurnoutByAge.svelte";
   import HistogramVoterTurnoutByEthnicity from "./components/HistogramVoterTurnoutByEthnicity.svelte";
+  import RandomForestModel from "./components/RandomForestModel.svelte";
+  import LinearRegressionModel from "./components/LinearRegressionModel.svelte";
+    import Prediction from "./components/Prediction.svelte";
 
   // const baseUrl = import.meta.env.VITE_API_BASE_URL;
   let data = []; // Raw data
@@ -58,7 +61,7 @@
   <div class="content">
     {#if activeMenu === "data"}
       <h1 class="text-3xl font-bold mb-4">Data Section</h1>
-
+      <Prediction />
       <!-- Tab Navigation for Raw and Cleaned Data -->
       <div class="mt-4 flex space-x-4">
         <button class="tab-button {activeTab === 'raw' ? 'tab-button-active' : ''}" on:click={() => selectTab("raw")}>Raw Data</button>
@@ -81,6 +84,8 @@
     {:else if activeMenu === "model"}
       <!-- Placeholder for ModelTraining Component -->
       <p>Model Training Component</p>
+      <RandomForestModel />
+      <LinearRegressionModel />
     {/if}
   </div>
 </div>

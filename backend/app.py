@@ -1,16 +1,13 @@
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pandas as pd
 import numpy as np
-import io
-import matplotlib.pyplot as plt
-import seaborn as sns
-from data_loader import load_data
-from data_cleaning import handle_missing_values, remove_outliers, normalize_data, convert_to_numeric
-from feature_engineering import create_meaningful_features
-from model_training import (train_random_forest, evaluate_model, feature_importance,
-                            cross_validate_model, tune_hyperparameters)
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error, r2_score
+from sklearn.linear_model import LinearRegression
+from data.loader import load_data
+from model.train_randomForest import  (train_random_forest_model, hyper_tune_random_forest) 
+from model.train_linearRegression import (train_linear_regression_model, hyper_tune_linear_regression)
+
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -36,128 +33,174 @@ def get_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/clean-data', methods=['GET'])
-def clean_data():
-    global voter_data
 
-    handle_missing_flag = request.args.get('handle_missing', 'true').lower() == 'true'
-    remove_outliers_flag = request.args.get('remove_outliers', 'true').lower() == 'true'
-    normalize_flag = request.args.get('normalize', 'true').lower() == 'true'
-    convert_numeric_flag = request.args.get('convert_numeric', 'true').lower() == 'true'
 
-    # Apply cleaning steps based on parameters
-    if handle_missing_flag:
-        voter_data = handle_missing_values(voter_data)
-    if remove_outliers_flag:
-        voter_data = remove_outliers(voter_data)
-    if normalize_flag:
-        voter_data = normalize_data(voter_data, exclude_columns=['Year'])
-    if convert_numeric_flag:
-        voter_data = convert_to_numeric(voter_data)
+@app.route('/train-randomforest', methods=['POST'])
+def train_random_forest():
+    try:
+        # Train the Random Forest model and get metrics
+        _, metrics = train_random_forest_model(voter_data)
 
-    # Round numeric values to 2 decimal places for readability
-    voter_data = voter_data.applymap(lambda x: round(x, 2) if isinstance(x, float) else x)
+        # Return success message and metrics
+        return jsonify({
+            "message": "Random Forest model trained successfully",
+            "metrics": metrics
+        }), 200
 
-    data = voter_data.to_dict(orient="records")
-    return jsonify(data)
+    except KeyError as e:
+        return jsonify({"error": f"KeyError: Missing or incorrect column name - {str(e)}"}), 400
+    except ValueError as e:
+        return jsonify({"error": f"ValueError: Invalid data or parameters - {str(e)}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
-@app.route('/missing-values', methods=['GET'])
-def handle_missing_values_route():
-    global voter_data
-    voter_data = handle_missing_values(voter_data)
-    return jsonify({"message": "Missing values handled."})
 
-@app.route('/remove-outliers', methods=['GET'])
-def remove_outliers_route():
-    global voter_data
-    voter_data = remove_outliers(voter_data)
-    return jsonify({"message": "Outliers removed."})
 
-@app.route('/normalize', methods=['GET'])
-def normalize_data_route():
-    global voter_data
-    voter_data = normalize_data(voter_data, exclude_columns=['Year'])
-    return jsonify({"message": "Data normalized."})
+@app.route('/hyperparameter-tuning-randomforest', methods=['POST'])
+def hyper_tune_random_forest_api():
+    try:
+        # Define hyperparameter grid
+        param_grid = {
+            'n_estimators': [50, 100, 200],
+            'max_depth': [None, 10, 20],
+            'min_samples_split': [2, 5],
+            'min_samples_leaf': [1, 2]
+        }
 
-@app.route('/convert-to-numeric', methods=['GET'])
-def convert_to_numeric_route():
-    global voter_data
-    voter_data = convert_to_numeric(voter_data)
-    return jsonify({"message": "Data converted to numeric."})
+        # Perform hyperparameter tuning and evaluation
+        _, metrics, best_params = hyper_tune_random_forest(voter_data, param_grid)
 
-@app.route('/feature-engineering', methods=['GET'])
-def feature_engineering_route():
-    global voter_data
-    voter_data = create_meaningful_features(voter_data)
-    return jsonify({"message": "Feature engineering applied."})
+        # Return success message, metrics, and best parameters
+        return jsonify({
+            "message": "Random Forest model trained and tuned successfully",
+            "best_params": best_params,
+            "metrics": metrics
+        }), 200
 
-@app.route('/train-random-forest', methods=['POST'])
-def train_random_forest_route():
-    global voter_data
-    target = 'Total Voter Turnout'
-    features = request.json.get('features', [])
-    X = voter_data[features]
-    y = voter_data[target]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    model = train_random_forest(X_train, y_train)
-    metrics = evaluate_model(model, X_test, y_test)
-    return jsonify(metrics)
+    except KeyError as e:
+        return jsonify({"error": f"KeyError: Missing or incorrect column name - {str(e)}"}), 400
+    except ValueError as e:
+        return jsonify({"error": f"ValueError: Invalid data or parameters - {str(e)}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
-@app.route('/feature-importance', methods=['POST'])
-def feature_importance_route():
-    global voter_data
-    features = request.json.get('features', [])
-    target = 'Total Voter Turnout'
-    X = voter_data[features]
-    y = voter_data[target]
-    model = train_random_forest(X, y)
-    importance = feature_importance(model, features).to_dict(orient="records")
-    return jsonify(importance)
+@app.route('/train-linear-regression', methods=['POST'])
+def train_linear_regression():
+    try:
+        # Train the Linear Regression model and get metrics
+        _, metrics = train_linear_regression_model(voter_data)
 
-@app.route('/cross-validation', methods=['POST'])
-def cross_validation_route():
-    global voter_data
-    features = request.json.get('features', [])
-    target = 'Total Voter Turnout'
-    X = voter_data[features]
-    y = voter_data[target]
-    model = train_random_forest(X, y)
-    cv_scores = cross_validate_model(model, X, y).tolist()
-    return jsonify({"cross_validation_rmse_scores": cv_scores, "mean_rmse": float(np.mean(cv_scores))})
+        # Return success message and metrics
+        return jsonify({
+            "message": "Linear Regression model trained successfully",
+            "metrics": metrics
+        }), 200
 
-@app.route('/tune-random-forest', methods=['POST'])
-def tune_random_forest_route():
-    global voter_data
-    features = request.json.get('features', [])
-    target = 'Total Voter Turnout'
-    X = voter_data[features]
-    y = voter_data[target]
-    _, best_params = tune_hyperparameters(X, y)
-    return jsonify({"best_params": best_params})
-# Route to create and send the histogram as an image
-@app.route('/plot-voter-turnout', methods=['GET'])
-def voter_turnout_plot():
-    # Load and sort data
-    voter_data = load_data()
-    voter_data_sorted = voter_data.sort_values('Year')
+    except KeyError as e:
+        return jsonify({"error": f"KeyError: Missing or incorrect column name - {str(e)}"}), 400
+    except ValueError as e:
+        return jsonify({"error": f"ValueError: Invalid data or parameters - {str(e)}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
 
-    # Create the plot
-    plt.figure(figsize=(12, 6))
-    sns.barplot(data=voter_data_sorted, x='Year', y='Total Voter Turnout', palette='viridis')
-    plt.title('Voter Turnout Rates by Year', fontsize=16)
-    plt.xlabel('Year')
-    plt.ylabel('Turnout Rate (%)')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
+@app.route('/hyperparameter-tuning-linear', methods=['POST'])
+def hyper_tune_linear_regression_api():
+    try:
+        # Define hyperparameter grid for Lasso Regression
+        param_grid = {
+            'alpha': [0.01, 0.1, 1, 10],  # Regularization strength
+            'fit_intercept': [True, False]
+        }
 
-    # Save the plot to a BytesIO object
-    img_io = io.BytesIO()
-    plt.savefig(img_io, format='png')
-    img_io.seek(0)
-    plt.close()  # Close the plot to free memory
+        # Perform hyperparameter tuning and evaluation
+        _, metrics, best_params = hyper_tune_linear_regression(voter_data, param_grid)
 
-    # Send the image file as a response
-    return send_file(img_io, mimetype='image/png')
+        # Return success message, metrics, and best parameters
+        return jsonify({
+            "message": "Linear Regression (Lasso) model trained and tuned successfully",
+            "best_params": best_params,
+            "metrics": metrics
+        }), 200
+
+    except KeyError as e:
+        return jsonify({"error": f"KeyError: Missing or incorrect column name - {str(e)}"}), 400
+    except ValueError as e:
+        return jsonify({"error": f"ValueError: Invalid data or parameters - {str(e)}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+
+
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        data = request.json
+        selected_columns = data.get('columns', [])  # List of column headers to predict for
+        predict_years = data.get('predict_years')
+
+        if not selected_columns or not isinstance(selected_columns, list):
+            return jsonify({"error": "Invalid or missing 'columns' parameter"}), 400
+        if not predict_years:
+            return jsonify({"error": "Missing 'predict_years' parameter"}), 400
+
+        # Combine years from the dataset and prediction years
+        min_year = voter_data['Year'].min()
+        max_year = max(predict_years)
+        full_years = np.arange(min_year, max_year + 1).tolist()  # Start from the earliest year in data
+
+        predictions = {}
+        actual_data = {}
+        metrics = {}
+
+        for column in selected_columns:
+            if column not in voter_data.columns:
+                return jsonify({"error": f"Invalid column '{column}'"}), 400
+
+            # Extract actual data
+            valid_data = voter_data[['Year', column]].dropna()
+            actual_values = valid_data[column].values
+            actual_years = valid_data['Year'].values.tolist()
+
+            # Train and predict
+            model = LinearRegression()
+            model.fit(valid_data['Year'].values.reshape(-1, 1), actual_values)
+            predicted_values = model.predict(np.array(full_years).reshape(-1, 1)).tolist()
+
+            # Calculate metrics
+            metrics[column] = {
+                "mae": float(mean_absolute_error(actual_values, model.predict(valid_data['Year'].values.reshape(-1, 1)))),
+                "r2": float(r2_score(actual_values, model.predict(valid_data['Year'].values.reshape(-1, 1)))),
+            }
+
+            predictions[column] = predicted_values
+            actual_data[column] = {
+                "years": actual_years,
+                "values": actual_values.tolist()
+            }
+
+        # Return predictions, actual data, and metrics
+        return jsonify({
+            "message": "Prediction successful",
+            "predictions": predictions,
+            "actual_data": actual_data,
+            "metrics": metrics,
+            "years": full_years
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+
+
+
+@app.route('/columns', methods=['GET'])
+def get_columns():
+    try:
+        # Assuming voter_data is a Pandas DataFrame
+        columns = voter_data.columns.tolist()  # Extract column names
+        return jsonify({"columns": columns}), 200
+    except Exception as e:
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)

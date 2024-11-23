@@ -37,3 +37,14 @@ def convert_to_numeric(df):
             df[column] = pd.to_numeric(df[column], errors='coerce')
     df.fillna(df.median(numeric_only=True), inplace=True)
     return df
+
+def add_engineered_features(df):
+    # Calculate gaps and population growth
+    print(df)
+    df['Gender_Gap'] = df['Female'] - df['Male']
+    df['White_Black_Gap'] = df['White'] - df['Black']
+    df['White_Hispanic_Gap'] = df['White'] - df['Hispanic']
+    df['Youth_Senior_Gap'] = df['18 to 24'] - df['65 and Over']
+    df['Population_Growth'] = df['Voting Population'].pct_change().fillna(0)
+    return df
+
