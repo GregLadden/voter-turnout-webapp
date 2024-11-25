@@ -11,7 +11,7 @@ from model.train_linearRegression import (train_linear_regression_model, hyper_t
 
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS for all routes
 
 # Load data globally
 voter_data = load_data()
@@ -197,7 +197,9 @@ def predict_random_forest():
     try:
         data = request.json
         print("random-forest data", data)
-        selected_columns = data.get('columns', [])  # List of column headers to predict for
+        
+        # Sanitize user inputs
+        selected_columns = [col.strip() for col in data.get('columns', [])]  # Remove extra whitespace
         predict_years = data.get('predict_years')
 
         # Validate inputs
@@ -205,6 +207,9 @@ def predict_random_forest():
             return jsonify({"error": "Invalid or missing 'columns' parameter"}), 400
         if not predict_years:
             return jsonify({"error": "Missing 'predict_years' parameter"}), 400
+
+        # Clean column names in the dataset
+        voter_data.columns = voter_data.columns.str.strip()  # Strip whitespace from column names
 
         # Combine years from the dataset and prediction years
         min_year = voter_data['Year'].min()
@@ -252,6 +257,7 @@ def predict_random_forest():
 
     except Exception as e:
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+
 
 
 
