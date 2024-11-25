@@ -7,13 +7,15 @@
 
   let columns = []; // List of available columns
   let selectedColumns = []; // User-selected columns
-  let predictionYears = "2025,2030,2040";
+  let predictionYears = ""; // Single-year input
   let responseMessage = null;
   let responseData = null;
   let errorMessage = null;
   let chart;
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
+  const currentYear = new Date().getFullYear();
 
   // Define a unified color map
   const colorMap = {
@@ -32,7 +34,7 @@
   // Fetch available columns on mount
   onMount(async () => {
     try {
-      const response = await axios.get(`${baseUrl}/columns`); // Fetch column names
+      const response = await axios.get(`${baseUrl}/columns`);
       columns = response.data.columns.filter(
         column => !["Year", "Voting Population", "Total Voter Turnout"].includes(column)
       );
@@ -46,11 +48,17 @@
     responseMessage = null;
     responseData = null;
 
+    // Validate the predictionYears input
+    const year = parseInt(predictionYears.trim());
+    if (isNaN(year) || year < currentYear + 1 || year > 2099) {
+      errorMessage = `Please enter a valid 4-digit year between ${currentYear + 1} and 2099.`;
+      return;
+    }
+
     try {
-      const years = predictionYears.split(",").map(year => parseInt(year.trim()));
       const response = await axios.post(`${baseUrl}/predict`, {
         columns: selectedColumns,
-        predict_years: years,
+        predict_years: [year],
       });
 
       responseMessage = response.data.message;
@@ -63,16 +71,14 @@
 
   function renderChart(data) {
     if (chart) chart.destroy();
-    console.log("Hispanic", data)
+
     const ctx = document.getElementById("predictionChart").getContext("2d");
     const datasets = [];
     let allDataPoints = [];
 
-    // Loop through selected columns and generate datasets
     selectedColumns.forEach(column => {
-      const color = colorMap[column] || "rgba(0, 0, 0, 1)"; // Default to black if no color found
+      const color = colorMap[column] || "rgba(0, 0, 0, 1)";
 
-      // Plot actual data
       if (data.actual_data[column]) {
         const actualData = data.actual_data[column].years.map((year, index) => ({
           x: year,
@@ -89,7 +95,6 @@
         });
       }
 
-      // Plot predictions
       if (data.predictions[column]) {
         const predictionData = data.years.map((year, index) => ({
           x: year,
@@ -101,7 +106,7 @@
           label: `Predicted (${column})`,
           data: predictionData,
           type: "line",
-          backgroundColor: `${color.replace("1)", "0.2)")}`, // Transparent background for line
+          backgroundColor: `${color.replace("1)", "0.2)")}`,
           borderColor: color,
           fill: false,
           tension: 0.3,
@@ -114,52 +119,38 @@
 
     chart = new Chart(ctx, {
       type: "scatter",
-      data: {
-        datasets: datasets,
-      },
+      data: { datasets },
       options: {
         responsive: true,
         plugins: {
-          legend: {
-            display: true,
-            position: "top",
-          },
+          legend: { display: true, position: "top" },
         },
         scales: {
-          x: {
-            type: "linear",
-            title: { display: true, text: "Year" },
-          },
-          y: {
-            title: { display: true, text: "Turnout Rate (%)" },
-            beginAtZero: false,
-            min: yAxisStart,
-          },
+          x: { type: "linear", title: { display: true, text: "Year" } },
+          y: { title: { display: true, text: "Turnout Rate (%)" }, beginAtZero: false, min: yAxisStart },
         },
       },
     });
   }
 
   function clearInputs() {
-    selectedColumns = []; // Reset selected columns
-    predictionYears = ""; // Clear prediction years
+    selectedColumns = [];
+    predictionYears = "";
     responseMessage = null;
     responseData = null;
     errorMessage = null;
 
     if (chart) {
-      chart.destroy(); // Clear the chart
+      chart.destroy();
       chart = null;
     }
   }
 </script>
 
-<div class="bg-gray-800 p-4 rounded-lg shadow-md  mt-8 w-full">
+<div class="bg-gray-800 p-4 rounded-lg shadow-md mt-8 w-full">
   <h1 class="text-2xl font-bold text-white mb-6 text-center">Linear Regression Prediction</h1>
 
-  <!-- Form Section -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Choose Parameters -->
     <div>
       <label class="block text-sm font-semibold text-gray-300 mb-2">Choose Parameters:</label>
       <div class="flex flex-wrap gap-2">
@@ -177,19 +168,17 @@
       </div>
     </div>
 
-    <!-- Enter Years -->
     <div>
-      <label class="block text-sm font-semibold text-gray-300 mb-2">Enter Years:</label>
+      <label class="block text-sm font-semibold text-gray-300 mb-2">Enter Year:</label>
       <input
         type="text"
         bind:value={predictionYears}
         class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none"
-        placeholder="e.g., 2025,2030,2040"
+        placeholder={`Enter a 4-digit year (${currentYear + 1} to 2099)`}
       />
     </div>
   </div>
 
-  <!-- Buttons -->
   <div class="mt-4 flex justify-end space-x-4">
     <button
       on:click={makePrediction}
@@ -205,14 +194,12 @@
     </button>
   </div>
 
-  <!-- Response Message -->
   {#if responseMessage}
     <p class="text-green-500 mt-4 font-semibold">{responseMessage}</p>
   {/if}
 
-  <!-- Error Message -->
   {#if errorMessage}
-    <p class="text-red-500 mt-4 font-semibold">{errorMessage}</p>
+    <p class="text-red-500 mt-4">{errorMessage}</p>
   {/if}
 </div>
 

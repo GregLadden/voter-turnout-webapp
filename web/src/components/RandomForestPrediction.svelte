@@ -15,6 +15,8 @@
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
+  const currentYear = new Date().getFullYear();
+
   const colorMap = {
     "White": "rgba(75, 192, 192, 1)", // Teal
     "Black": "rgba(54, 162, 235, 1)", // Blue
@@ -43,6 +45,13 @@
     errorMessage = null;
     responseMessage = null;
     responseData = null;
+
+    // Validate the predictionYears input
+    const year = parseInt(predictionYears.trim());
+    if (isNaN(year) || year < currentYear + 1 || year > 2099) {
+      errorMessage = `Please enter a valid 4-digit year between ${currentYear + 1} and 2099.`;
+      return;
+    }
 
     try {
       const years = predictionYears.split(",").map(year => parseInt(year.trim()));
@@ -162,7 +171,7 @@
             type="text"
             bind:value={predictionYears}
             class="w-full p-3 rounded-lg bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring focus:ring-blue-500"
-            placeholder="e.g., 2025,2030,2040"
+            placeholder={`Enter a 4-digit year (${currentYear + 1} to 2099)`}
           />
         </div>
         <!-- Submit and Clear Buttons -->
@@ -180,6 +189,13 @@
             Clear
           </button>
         </div>
+        {#if responseMessage}
+          <p class="text-green-500 mt-4 font-semibold">{responseMessage}</p>
+        {/if}
+
+        {#if errorMessage}
+          <p class="text-red-500 mt-4">{errorMessage}</p>
+        {/if}
       </div>
     </div>
   </div>
