@@ -1,8 +1,10 @@
-<!-- src/App.svelte -->
+
 <script>
   import RandomForestPrediction from "./components/RandomForestPrediction.svelte";
   import LinearPrediction from "./components/LinearPrediction.svelte";
-  let activeMenu = "dashboard"; // Tracks the active menu item
+
+  let activeMenu = "dashboard";
+
 </script>
 
 <style>
@@ -37,7 +39,7 @@
         on:click={() => (activeMenu = "data")}
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 lg:h-5 lg:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3L3 12h7l-4 9 12-15h-8z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3L5 9h4l-4 6h4l-4 6h4l6-18H9z" />
         </svg>
         <span class="hidden lg:block text-sm font-medium">Data</span>
       </a>
@@ -59,22 +61,21 @@
 
   <!-- Main Content -->
   <main class="flex-1 bg-gray-900 p-6 lg:p-10 text-white">
-    <h1 class="text-4xl font-bold mb-8">Fox Team</h1>
+    {#if activeMenu === "dashboard"}
+      <!-- Inject RandomForestPrediction -->
+      <RandomForestPrediction />
+      <LinearPrediction />
+    {/if}
+    {#if activeMenu === "data"}
+      <h1 class="text-2xl font-bold mb-6">Data</h1>
+      <p>Data-related content goes here...</p>
+    {/if}
 
-    <!-- Row for Random Forest Predictions -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Left Column: 2/3 -->
-      <div class="lg:col-span-2 bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h2 class="text-xl font-semibold mb-4">Box Plot</h2>
-        <RandomForestPrediction />
-      </div>
-
-      <!-- Right Column: 1/3 -->
-      <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h2 class="text-xl font-semibold mb-4">Pie Chart</h2>
-        <RandomForestPrediction />
-      </div>
-    </div>
+    {#if activeMenu === "model"}
+      <h1 class="text-2xl font-bold mb-6">Model Training</h1>
+      <p>Model-related content goes here...</p>
+    {/if}
   </main>
 </div>
+
 

@@ -15,18 +15,18 @@
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
-  // Define a color map for the columns
+  // Define a unified color map
   const colorMap = {
-    "White": "rgba(75, 192, 192, 1)",
-    "Black": "rgba(54, 162, 235, 1)",
-    "Asian": "rgba(255, 99, 132, 1)",
-    "Hispanic": "rgba(255, 206, 86, 1)",
-    "Male": "rgba(153, 102, 255, 1)",
-    "Female": "rgba(255, 159, 64, 1)",
-    "18 to 24": "rgba(0, 128, 128, 1)",
-    "22 to 44": "rgba(128, 0, 128, 1)",
-    "45 to 64": "rgba(0, 255, 127, 1)",
-    "65 and Over": "rgba(255, 69, 0, 1)"
+    "White": "rgba(75, 192, 192, 1)", // Teal
+    "Black": "rgba(54, 162, 235, 1)", // Blue
+    "Asian": "rgba(255, 99, 132, 1)", // Red
+    "Hispanic": "rgba(255, 206, 86, 1)", // Yellow
+    "Male": "rgba(153, 102, 255, 1)", // Purple
+    "Female": "rgba(255, 159, 64, 1)", // Orange
+    "18 to 24": "rgba(0, 128, 128, 1)", // Teal Green
+    "22 to 44": "rgba(128, 0, 128, 1)", // Violet
+    "45 to 64": "rgba(0, 255, 127, 1)", // Mint Green
+    "65 and Over": "rgba(255, 69, 0, 1)" // Deep Red
   };
 
   // Fetch available columns on mount
@@ -63,7 +63,7 @@
 
   function renderChart(data) {
     if (chart) chart.destroy();
-
+    console.log("Hispanic", data)
     const ctx = document.getElementById("predictionChart").getContext("2d");
     const datasets = [];
     let allDataPoints = [];
@@ -154,45 +154,52 @@
   }
 </script>
 
-<div class="bg-gray-100 p-6 rounded-lg shadow-md max-w-xl mx-auto mt-10">
-  <h1 class="text-3xl font-bold mb-6 text-center">Data Section</h1>
+<div class="bg-gray-800 p-4 rounded-lg shadow-md  mt-8 w-full">
+  <h1 class="text-2xl font-bold text-white mb-6 text-center">Linear Regression Prediction</h1>
 
-  <div class="mb-4">
-    <label class="block text-lg font-semibold mb-2">Choose Parameters:</label>
-    {#each columns as column}
-      <label class="block">
-        <input
-          type="checkbox"
-          value={column}
-          bind:group={selectedColumns}
-          class="mr-2"
-        />
-        {column}
-      </label>
-    {/each}
+  <!-- Form Section -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Choose Parameters -->
+    <div>
+      <label class="block text-sm font-semibold text-gray-300 mb-2">Choose Parameters:</label>
+      <div class="flex flex-wrap gap-2">
+        {#each columns as column}
+          <label class="flex items-center text-gray-300">
+            <input
+              type="checkbox"
+              value={column}
+              bind:group={selectedColumns}
+              class="h-4 w-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500 mr-2"
+            />
+            <span class="text-sm">{column}</span>
+          </label>
+        {/each}
+      </div>
+    </div>
+
+    <!-- Enter Years -->
+    <div>
+      <label class="block text-sm font-semibold text-gray-300 mb-2">Enter Years:</label>
+      <input
+        type="text"
+        bind:value={predictionYears}
+        class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none"
+        placeholder="e.g., 2025,2030,2040"
+      />
+    </div>
   </div>
 
-  <div class="mb-4">
-    <label class="block text-lg font-semibold mb-2">Enter Years (comma-separated):</label>
-    <input
-      type="text"
-      bind:value={predictionYears}
-      class="block w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring focus:ring-blue-300"
-      placeholder="e.g., 2025,2030,2040"
-    />
-  </div>
-
-  <div class="text-center space-x-4">
+  <!-- Buttons -->
+  <div class="mt-4 flex justify-end space-x-4">
     <button
       on:click={makePrediction}
-      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-md focus:outline-none focus:ring focus:ring-blue-300"
+      class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg"
     >
       Submit
     </button>
-
     <button
       on:click={clearInputs}
-      class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg shadow-md focus:outline-none focus:ring focus:ring-gray-300"
+      class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg"
     >
       Clear
     </button>
@@ -200,16 +207,19 @@
 
   <!-- Response Message -->
   {#if responseMessage}
-    <p class="text-green-500 mt-4 font-semibold text-center">{responseMessage}</p>
+    <p class="text-green-500 mt-4 font-semibold">{responseMessage}</p>
   {/if}
 
   <!-- Error Message -->
   {#if errorMessage}
-    <p class="text-red-500 mt-4 font-semibold text-center">{errorMessage}</p>
+    <p class="text-red-500 mt-4 font-semibold">{errorMessage}</p>
   {/if}
 </div>
 
-<canvas id="predictionChart"></canvas>
+<div class="bg-gray-900 p-6 mt-6 rounded-lg shadow-lg">
+  <h2 class="text-xl font-semibold text-white mb-4">Prediction Chart</h2>
+  <canvas id="predictionChart"></canvas>
+</div>
 
 <style>
   canvas {
