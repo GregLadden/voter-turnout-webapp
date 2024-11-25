@@ -1,94 +1,95 @@
-<!-- src/App.svelte -->
-
 
 <script>
-  import { onMount } from "svelte";
-  import axios from "axios";
-  import VoterTurnoutTable from "./components/VoterTurnoutTable.svelte";
-  import DataCleaning from './components/DataCleaning.svelte';
-  import HistogramVoterTurnoutRates from "./components/HistogramVoterTurnoutRates.svelte";
-  import HistogramVoterTurnoutByAge from "./components/HistogramVoterTurnoutByAge.svelte";
-  import HistogramVoterTurnoutByEthnicity from "./components/HistogramVoterTurnoutByEthnicity.svelte";
-  import RandomForestModel from "./components/RandomForestModel.svelte";
-  import LinearRegressionModel from "./components/LinearRegressionModel.svelte";
-  import LinearPrediction from "./components/LinearPrediction.svelte";
   import RandomForestPrediction from "./components/RandomForestPrediction.svelte";
+  import LinearPrediction from "./components/LinearPrediction.svelte";
+  import VoterTurnoutTable from "./components/VoterTurnoutTable.svelte";
+    import RandomForestModel from "./components/RandomForestModel.svelte";
+    import LinearRegressionModel from "./components/LinearRegressionModel.svelte";
 
-  // const baseUrl = import.meta.env.VITE_API_BASE_URL;
-  let data = []; // Raw data
-  let activeMenu = "data"; // Main menu selection
-  let activeTab = "raw"; // Tab selection within the Data section
+  let activeMenu = "dashboard";
 
-  // Fetch raw data on mount
-  // onMount(async () => {
-  //   try {
-  //     const response = await axios.get(`${baseUrl}/data`);
-  //     data = response.data;
-  //   } catch (error) {
-  //     console.error("Failed to fetch raw data:", error);
-  //   }
-  // });
-
-  // Menu selection function
-  function selectMenu(menu) {
-    activeMenu = menu;
-  }
-
-  // Tab selection function for Raw Data and Cleaned Data
-  function selectTab(tab) {
-    activeTab = tab;
-  }
 </script>
 
 <style>
-  .sidebar { width: 200px; background-color: #3b82f6; color: white; padding: 20px; }
-  .menu-item { padding: 10px 0; cursor: pointer; font-weight: bold; }
-  .menu-item-active { background-color: #2563eb; color: white; }
-  .tab-button { padding: 10px 20px; cursor: pointer; font-weight: bold; border-bottom: 2px solid transparent; }
-  .tab-button-active { border-color: #2563eb; }
-  .content { padding: 20px; flex: 1; }
+  .smooth-hover {
+    transition: all 0.3s ease;
+  }
 </style>
 
-<div class="flex min-h-screen">
-  <!-- Sidebar Menu -->
-  <div class="sidebar">
-    <h2 class="text-lg font-semibold mb-4">Menu</h2>
-    <div class="menu-item {activeMenu === 'data' ? 'menu-item-active' : ''}" on:click={() => selectMenu("data")}>Data</div>
-    <div class="menu-item {activeMenu === 'graphs' ? 'menu-item-active' : ''}" on:click={() => selectMenu("graphs")}>Graphs</div>
-    <div class="menu-item {activeMenu === 'model' ? 'menu-item-active' : ''}" on:click={() => selectMenu("model")}>Model Training</div>
-  </div>
+<div class="bg-gray-900 min-h-screen flex">
+  <!-- Sidebar -->
+  <aside class="bg-gray-800 w-20 lg:w-64 flex flex-col justify-between p-4 lg:p-6">
+    <nav class="space-y-4">
+      <!-- Dashboard Icon -->
+      <a 
+        href="#"
+        class={`p-4 lg:py-3 lg:px-6 rounded-md flex justify-center lg:justify-start lg:items-center space-x-0 lg:space-x-2 text-white/50 ${
+          activeMenu === "dashboard" ? "bg-gray-700 text-white" : "hover:bg-gray-700 hover:text-white smooth-hover"
+        }`}
+        on:click={() => (activeMenu = "dashboard")}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 lg:h-5 lg:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
+        </svg>
+        <span class="hidden lg:block text-sm font-medium">Dashboard</span>
+      </a>
+      <!-- Data Icon -->
+      <a 
+        href="#"
+        class={`p-4 lg:py-3 lg:px-6 rounded-md flex justify-center lg:justify-start lg:items-center space-x-0 lg:space-x-2 text-white/50 ${
+          activeMenu === "data" ? "bg-gray-700 text-white" : "hover:bg-gray-700 hover:text-white smooth-hover"
+        }`}
+        on:click={() => (activeMenu = "data")}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 lg:h-5 lg:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3L5 9h4l-4 6h4l-4 6h4l6-18H9z" />
+        </svg>
+        <span class="hidden lg:block text-sm font-medium">Data</span>
+      </a>
+      <!-- Model Training Icon -->
+      <a 
+        href="#"
+        class={`p-4 lg:py-3 lg:px-6 rounded-md flex justify-center lg:justify-start lg:items-center space-x-0 lg:space-x-2 text-white/50 ${
+          activeMenu === "model" ? "bg-gray-700 text-white" : "hover:bg-gray-700 hover:text-white smooth-hover"
+        }`}
+        on:click={() => (activeMenu = "model")}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 lg:h-5 lg:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <span class="hidden lg:block text-sm font-medium">Model Training</span>
+      </a>
+    </nav>
+  </aside>
 
-  <!-- Main Content Area -->
-  <div class="content">
-    {#if activeMenu === "data"}
-      <h1 class="text-3xl font-bold mb-4">Data Section</h1>
+  <!-- Main Content -->
+  <main class="flex-1 bg-gray-900 p-6 lg:p-10 text-white">
+    {#if activeMenu === "dashboard"}
+      <!-- Inject RandomForestPrediction -->
       <RandomForestPrediction />
       <LinearPrediction />
-      <!-- Tab Navigation for Raw and Cleaned Data -->
-      <div class="mt-4 flex space-x-4">
-        <button class="tab-button {activeTab === 'raw' ? 'tab-button-active' : ''}" on:click={() => selectTab("raw")}>Raw Data</button>
-        <button class="tab-button {activeTab === 'cleaned' ? 'tab-button-active' : ''}" on:click={() => selectTab("cleaned")}>Cleaned Data</button>
-      </div>
-
-      <!-- Display Raw or Cleaned Data based on Tab Selection -->
-      {#if activeTab === "raw"}
-        <VoterTurnoutTable />
-      {:else if activeTab === "cleaned"}
-        <DataCleaning />
-      {/if}
-
-    {:else if activeMenu === "graphs"}
-      <!-- Placeholder for Graphs Component -->
-      <p>Graphs Component</p>
-      <HistogramVoterTurnoutRates />
-      <HistogramVoterTurnoutByAge />
-      <HistogramVoterTurnoutByEthnicity />
-    {:else if activeMenu === "model"}
-      <!-- Placeholder for ModelTraining Component -->
-      <p>Model Training Component</p>
-      <RandomForestPrediction/>
-      <LinearRegressionModel />
     {/if}
-  </div>
+    {#if activeMenu === "data"}
+      <h1 class="text-2xl font-bold mb-6">Data</h1>
+      <VoterTurnoutTable /> 
+    {/if}
+    {#if activeMenu === "model"}
+      <h1 class="text-3xl font-bold text-white mb-6 text-center">Model Training</h1>
+      <div class=" p-6 rounded-lg shadow-md">
+        <div class="flex flex-col lg:flex-row gap-6">
+          <!-- Random Forest Model Section -->
+          <div class="flex-1 bg-gray-700 p-6 rounded-lg shadow-md">
+            <RandomForestModel />
+          </div>
+
+          <!-- Linear Regression Model Section -->
+          <div class="flex-1 bg-gray-700 p-6 rounded-lg shadow-md">
+            <LinearRegressionModel />
+          </div>
+        </div>
+      </div>
+    {/if}
+  </main>
 </div>
+
 
