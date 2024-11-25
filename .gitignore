@@ -37,7 +37,7 @@ dist/
 # Output of build tools
 /build
 /web/build
-/web/public
+# /web/public
 
 # SvelteKit temporary files
 .svelte-kit/
