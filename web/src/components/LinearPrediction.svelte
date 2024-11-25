@@ -147,69 +147,78 @@
   }
 </script>
 
-<div class="bg-gray-800 p-4 rounded-lg shadow-md mt-8 w-full">
-  <h1 class="text-2xl font-bold text-white mb-6 text-center">Linear Regression Prediction</h1>
+<div class="bg-gray-800 p-4 rounded-lg shadow-md w-full">
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-center text-white mb-6">
+      Linear Regression Prediction
+    </h1>
+    <!-- Form Section -->
+    <div class="bg-gray-700 p-6 rounded-lg mb-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+        <!-- Choose Parameters -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-300 mb-2">Choose Parameters:</label>
+          <div class="flex flex-wrap gap-2">
+            {#each columns as column}
+              <label class="flex items-center text-gray-300">
+                <input
+                  type="checkbox"
+                  value={column}
+                  bind:group={selectedColumns}
+                  class="h-4 w-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500 mr-2"
+                />
+                <span class="text-sm">{column}</span>
+              </label>
+            {/each}
+          </div>
+        </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div>
-      <label class="block text-sm font-semibold text-gray-300 mb-2">Choose Parameters:</label>
-      <div class="flex flex-wrap gap-2">
-        {#each columns as column}
-          <label class="flex items-center text-gray-300">
-            <input
-              type="checkbox"
-              value={column}
-              bind:group={selectedColumns}
-              class="h-4 w-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500 mr-2"
-            />
-            <span class="text-sm">{column}</span>
-          </label>
-        {/each}
+        <!-- Enter Year -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-300 mb-2">Enter Year:</label>
+          <input
+            type="text"
+            bind:value={predictionYears}
+            class="w-full p-3 rounded-lg bg-gray-600 border border-gray-500 text-white focus:outline-none focus:ring focus:ring-blue-500"
+            placeholder={`Enter a 4-digit year (${currentYear + 1} to 2099)`}
+          />
+        </div>
+
+        <!-- Submit and Clear Buttons -->
+        <div class="flex justify-end gap-4">
+          <button
+            on:click={makePrediction}
+            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
+          >
+            Submit
+          </button>
+          <button
+            on:click={clearInputs}
+            class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg focus:outline-none focus:ring focus:ring-gray-400"
+          >
+            Clear
+          </button>
+        </div>
       </div>
-    </div>
-
-    <div>
-      <label class="block text-sm font-semibold text-gray-300 mb-2">Enter Year:</label>
-      <input
-        type="text"
-        bind:value={predictionYears}
-        class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none"
-        placeholder={`Enter a 4-digit year (${currentYear + 1} to 2099)`}
-      />
+      <!-- Response Messages -->
+      {#if responseMessage}
+        <p class="text-green-500 mt-4 font-semibold">{responseMessage}</p>
+      {/if}
+      {#if errorMessage}
+        <p class="text-red-500 mt-4">{errorMessage}</p>
+      {/if}
     </div>
   </div>
 
-  <div class="mt-4 flex justify-end space-x-4">
-    <button
-      on:click={makePrediction}
-      class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg"
-    >
-      Submit
-    </button>
-    <button
-      on:click={clearInputs}
-      class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg"
-    >
-      Clear
-    </button>
+  <!-- Chart Section -->
+  <div class="bg-gray-900 p-6 rounded-lg shadow-lg">
+    <h2 class="text-xl font-semibold text-white mb-4">Scatter Plot</h2>
+    <canvas id="predictionChart" class="chart-bar"></canvas>
   </div>
-
-  {#if responseMessage}
-    <p class="text-green-500 mt-4 font-semibold">{responseMessage}</p>
-  {/if}
-
-  {#if errorMessage}
-    <p class="text-red-500 mt-4">{errorMessage}</p>
-  {/if}
-</div>
-
-<div class="bg-gray-900 p-6 mt-6 rounded-lg shadow-lg">
-  <h2 class="text-xl font-semibold text-white mb-4">Prediction Chart</h2>
-  <canvas id="predictionChart"></canvas>
 </div>
 
 <style>
-  canvas {
+  .chart-bar {
     max-width: 100%;
     height: auto;
   }

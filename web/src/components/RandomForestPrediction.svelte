@@ -7,7 +7,7 @@
 
   let columns = []; // List of available columns
   let selectedColumns = []; // User-selected columns
-  let predictionYears = "2025,2030,2040";
+  let predictionYears = "";
   let responseMessage = null;
   let responseData = null;
   let errorMessage = null;
@@ -69,41 +69,69 @@
     }
   }
 
+  
   function renderCharts(data) {
     if (chartBar) chartBar.destroy();
     if (chartDoughnut) chartDoughnut.destroy();
 
-    const barCtx = document.querySelector("#barChart").getContext("2d");
+    const pointCtx = document.querySelector("#pointChart").getContext("2d");
     const doughnutCtx = document.querySelector("#doughnutChart").getContext("2d");
 
-    const barDatasets = selectedColumns.map(column => ({
+    // Define point style options
+    const pointStyles = [
+      'circle', 'rect', 'rectRounded', 'triangle', 'star', 'cross', 'dash'
+    ];
+
+    // Point Chart: Line chart with customized points
+    const pointDatasets = selectedColumns.map((column, index) => ({
       label: column,
-      data: data.years.map((_, index) => data.predictions[column]?.[index] || 0),
-      backgroundColor: `${colorMap[column]?.replace("1)", "0.6)")}`,
+      data: data.years.map((year, idx) => ({
+        x: year,
+        y: data.predictions[column]?.[idx] || 0,
+      })),
       borderColor: colorMap[column],
-      borderWidth: 1
+      backgroundColor: colorMap[column],
+      borderWidth: 2,
+      pointStyle: pointStyles[index % pointStyles.length], // Cycle through point styles
+      pointRadius: 0, // Size of the points
+      pointHoverRadius: 8, // Hover effect
+      tension: 0.3, // Smooth curves
+      fill: false, // No fill under the line
     }));
 
-    chartBar = new Chart(barCtx, {
-      type: "bar",
+    chartBar = new Chart(pointCtx, {
+      type: "line", // Line chart with points
       data: {
-        labels: data.years,
-        datasets: barDatasets
+        datasets: pointDatasets,
       },
       options: {
         responsive: true,
-        scales: {
-          x: { title: { display: true, text: "Year" } },
-          y: { title: { display: true, text: "Turnout Rate (%)" }, beginAtZero: true }
-        },
         plugins: {
-          legend: { display: true, position: "top" }
-        }
-      }
+          legend: {
+            display: true,
+            position: "top",
+          },
+          title: {
+            display: true,
+            text: "Point Chart with Custom Styles",
+          },
+        },
+        scales: {
+          x: {
+            type: "linear",
+            title: { display: true, text: "Year" },
+          },
+          y: {
+            title: { display: true, text: "Turnout Rate (%)" },
+            beginAtZero: true,
+          },
+        },
+      },
     });
 
-    const doughnutData = selectedColumns.map(column => 
-      data.years.reduce((sum, _, index) => sum + (data.predictions[column]?.[index] || 0), 0)
+    // Doughnut Chart
+    const doughnutData = selectedColumns.map(column =>
+      data.years.reduce((sum, _, idx) => sum + (data.predictions[column]?.[idx] || 0), 0)
     );
 
     chartDoughnut = new Chart(doughnutCtx, {
@@ -114,16 +142,18 @@
           {
             data: doughnutData,
             backgroundColor: selectedColumns.map(column => colorMap[column]),
-            hoverBackgroundColor: selectedColumns.map(column => colorMap[column]?.replace("1)", "0.8)"))
-          }
-        ]
+            hoverBackgroundColor: selectedColumns.map(column =>
+              colorMap[column]?.replace("1)", "0.8)")
+            ),
+          },
+        ],
       },
       options: {
         responsive: true,
         plugins: {
-          legend: { display: true, position: "top" }
-        }
-      }
+          legend: { display: true, position: "top" },
+        },
+      },
     });
   }
 
@@ -204,8 +234,8 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Box Plot: Occupies 3/4 of the width -->
     <div class="lg:col-span-2 bg-gray-900 p-6 rounded-lg shadow-lg">
-      <h2 class="text-xl font-semibold text-white mb-4">Box Plot</h2>
-      <canvas id="barChart" class="chart-bar"></canvas>
+      <h2 class="text-xl font-semibold text-white mb-4">Point Chart</h2>
+      <canvas id="pointChart" class="chart-bar"></canvas>
     </div>
     <!-- Doughnut Chart: Occupies 1/4 of the width -->
     <div class="lg:col-span-1 bg-gray-900 p-6 rounded-lg shadow-lg">
