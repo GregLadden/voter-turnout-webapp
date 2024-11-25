@@ -2,6 +2,9 @@
 <script>
   import RandomForestPrediction from "./components/RandomForestPrediction.svelte";
   import LinearPrediction from "./components/LinearPrediction.svelte";
+  import VoterTurnoutTable from "./components/VoterTurnoutTable.svelte";
+    import RandomForestModel from "./components/RandomForestModel.svelte";
+    import LinearRegressionModel from "./components/LinearRegressionModel.svelte";
 
   let activeMenu = "dashboard";
 
@@ -68,12 +71,23 @@
     {/if}
     {#if activeMenu === "data"}
       <h1 class="text-2xl font-bold mb-6">Data</h1>
-      <p>Data-related content goes here...</p>
+      <VoterTurnoutTable /> 
     {/if}
-
     {#if activeMenu === "model"}
-      <h1 class="text-2xl font-bold mb-6">Model Training</h1>
-      <p>Model-related content goes here...</p>
+      <h1 class="text-3xl font-bold text-white mb-6 text-center">Model Training</h1>
+      <div class=" p-6 rounded-lg shadow-md">
+        <div class="flex flex-col lg:flex-row gap-6">
+          <!-- Random Forest Model Section -->
+          <div class="flex-1 bg-gray-700 p-6 rounded-lg shadow-md">
+            <RandomForestModel />
+          </div>
+
+          <!-- Linear Regression Model Section -->
+          <div class="flex-1 bg-gray-700 p-6 rounded-lg shadow-md">
+            <LinearRegressionModel />
+          </div>
+        </div>
+      </div>
     {/if}
   </main>
 </div>
