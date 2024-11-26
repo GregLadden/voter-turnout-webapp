@@ -4,7 +4,9 @@
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
-  let isLoading = false;
+  let isLoading = false; // Tracks the loading state
+  let isHyperTuningDisabled = true; // Disables the Hyperparameter Tuning button
+  let message = "Render's free tier does not offer enough memory for this.";
   let responseMessage = null;
   let responseData = null;
   let errorMessage = null;
@@ -64,11 +66,15 @@
       <!-- Hyperparameter Tuning Button -->
       <button
         on:click={hyperTuneModel}
-        class="px-6 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 focus:ring focus:ring-green-300"
-        disabled={isLoading}
+        class="px-6 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 focus:ring focus:ring-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={isLoading || isHyperTuningDisabled}
       >
         {isLoading ? "Loading..." : "Hyper Tune Model"}
       </button>
+      <!-- Conditional Message -->
+      {#if isHyperTuningDisabled}
+        <p class="text-red-500 mt-4 text-center">{message}</p>
+      {/if}
     </div>
   </div>
 
