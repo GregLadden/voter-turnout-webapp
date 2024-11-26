@@ -48,43 +48,49 @@
   }
 </script>
 
-<div class="bg-gray-800 p-6 rounded-lg shadow-md w-full">
-  <h1 class="text-3xl font-bold text-center text-white mb-6">Random Forest Model</h1>
+<div class="bg-gray-800 p-8 rounded-lg shadow-md w-full">
+  <h1 class="text-3xl font-bold text-center text-white mb-8">Random Forest Model</h1>
 
   <!-- Button Section -->
-  <div class="bg-gray-700 p-6 rounded-lg mb-6">
-    <div class="flex justify-center gap-4">
-      <!-- Train Model Button -->
-      <button
-        on:click={trainModel}
-        class="px-6 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 focus:ring focus:ring-blue-300"
-        disabled={isLoading}
-      >
-        {isLoading ? "Loading..." : "Train Model"}
-      </button>
+  <div class="bg-gray-700 p-6 rounded-lg mb-8">
+    <div class="flex flex-col items-center gap-4">
+      <!-- Buttons Row -->
+      <div class="flex justify-center gap-6">
+        <!-- Train Model Button -->
+        <button
+          on:click={trainModel}
+          class="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 focus:ring focus:ring-blue-300 transition"
+          disabled={isLoading}
+        >
+          {isLoading ? "Loading..." : "Train Model"}
+        </button>
 
-      <!-- Hyperparameter Tuning Button -->
-      <button
-        on:click={hyperTuneModel}
-        class="px-6 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 focus:ring focus:ring-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled={isLoading || isHyperTuningDisabled}
-      >
-        {isLoading ? "Loading..." : "Hyper Tune Model"}
-      </button>
-      <!-- Conditional Message -->
+        <!-- Hyperparameter Tuning Button -->
+        <button
+          on:click={hyperTuneModel}
+          class="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 focus:ring focus:ring-green-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isLoading || isHyperTuningDisabled}
+        >
+          {isLoading ? "Loading..." : "Hyper Tune Model"}
+        </button>
+      </div>
+
+      <!-- Message Section -->
       {#if isHyperTuningDisabled}
-        <p class="text-red-500 mt-4 text-center">{message}</p>
+        <p class="text-red-500 text-sm text-center mt-4 bg-red-100 px-4 py-2 rounded-lg">
+          {message}
+        </p>
       {/if}
     </div>
   </div>
 
-  <!-- Messages -->
+  <!-- Feedback Messages -->
   {#if responseMessage}
-    <p class="text-green-500 text-center font-semibold mt-4">{responseMessage}</p>
+    <p class="text-green-500 text-center font-semibold mb-4">{responseMessage}</p>
   {/if}
 
   {#if errorMessage}
-    <p class="text-red-500 text-center font-semibold mt-4">{errorMessage}</p>
+    <p class="text-red-500 text-center font-semibold mb-4">{errorMessage}</p>
   {/if}
 
   <!-- Results Section -->
